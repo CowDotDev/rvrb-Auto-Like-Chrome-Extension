@@ -1,6 +1,6 @@
 # rvrb Auto-Like Chrome Extension
 
-A small Manifest V3 extension that keeps `[data-vote]` elements active on **https://app.rvrb.one**. Disabled by default.
+A small Manifest V3 extension that keeps `[data-vote][title="Vote Up"]` elements active on **https://app.rvrb.one**. Disabled by default.
 
 ## Install
 
@@ -17,7 +17,7 @@ The toolbar icon is **grey** on other sites, **red** on app.rvrb.one with automa
 ## Behavior and permissions
 
 - Only injects into `https://app.rvrb.one/*`, not subdomains or other hosts.
-- Clicks every `[data-vote]` element whose `data-active` is not exactly `"true"`.
+- Clicks only `[data-vote][title="Vote Up"]` elements whose `data-active` is not exactly `"true"`.
 - Watches relevant DOM mutations and retries at one-second intervals, with a per-element one-second click cooldown.
 - Disconnects the observer and cancels timers while disabled.
 - Uses `storage` to save the toggle and exact-site host access to recognize rvrb tabs. An event-driven background service worker updates toolbar icons; it never scans page contents. No broad `tabs` permission, analytics, or external requests.

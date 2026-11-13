@@ -16,7 +16,13 @@ async function setup({ hostname = "app.rvrb.one", enabled = false } = {}) {
   const elements = [];
   const context = {
     location: { hostname },
-    document: { documentElement: {}, querySelectorAll: () => elements },
+    document: {
+      documentElement: {},
+      querySelectorAll: (selector) => {
+        assert.equal(selector, '[data-vote][title="Vote Up"]');
+        return elements.filter((element) => element.title === "Vote Up");
+      },
+    },
     Date: { now: () => now },
     console,
     MutationObserver: class {
@@ -38,9 +44,9 @@ async function setup({ hostname = "app.rvrb.one", enabled = false } = {}) {
     timers,
     get observing() { return observing; },
     get listening() { return !!listener; },
-    add(active) {
+    add(active, title = "Vote Up") {
       const element = {
-        active, clicks: 0,
+        active, title, clicks: 0,
         getAttribute() { return this.active; },
         click() { this.clicks++; },
       };
@@ -118,6 +124,23 @@ test("live settings take priority over stale initial settings", async () => {
   await app.initialize();
   assert.equal(app.observing, false);
   assert.equal(app.timers.size, 0);
+});
+
+test("only clicks elements with the exact Vote Up title", async () => {
+  const app = await setup({ enabled: true });
+  const up = app.add("false", "Vote Up");
+  const down = app.add("false", "Vote Down");
+  const missing = app.add("false", null);
+  const wrongCase = app.add("false", "vote up");
+  await app.initialize();
+  assert.equal(up.clicks, 1);
+  assert.equal(down.clicks, 0);
+  assert.equal(missing.clicks, 0);
+  assert.equal(wrongCase.clicks, 0);
+  down.title = "Vote Up";
+  app.mutate();
+  app.tick();
+  assert.equal(down.clicks, 1);
 });
 
 test("manifest grants only storage and exact HTTPS host access", () => {

@@ -13,7 +13,7 @@
 
   function scan() {
     if (!enabled) return;
-    for (const element of document.querySelectorAll("[data-vote]")) {
+    for (const element of document.querySelectorAll('[data-vote][title="Vote Up"]')) {
       if (!enabled) break;
       if (element.getAttribute("data-active") === "true") continue;
       if (typeof element.click !== "function") continue;
@@ -40,7 +40,7 @@
         subtree: true,
         childList: true,
         attributes: true,
-        attributeFilter: ["data-vote", "data-active"],
+        attributeFilter: ["data-vote", "data-active", "title"],
       });
       interval = setInterval(scan, retryDelay);
       scan();
