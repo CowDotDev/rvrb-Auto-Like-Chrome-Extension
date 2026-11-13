@@ -30,6 +30,8 @@
     lastScan = Date.now();
     for (const element of document.querySelectorAll('[data-vote][title="Vote Up"]')) {
       if (!enabled) break;
+      // Respect a deliberate downvote, including one made between clicks.
+      if (document.querySelector('[data-vote][title="Vote Down"][data-active="true"]')) break;
       if (element.getAttribute("data-active") === "true") continue;
       if (typeof element.click !== "function") continue;
       const now = Date.now();

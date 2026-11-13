@@ -20,6 +20,7 @@ The toolbar icon is **grey** on other sites, **red** on app.rvrb.one with automa
 
 - Only injects into `https://app.rvrb.one/*`, not subdomains or other hosts.
 - Clicks only `[data-vote][title="Vote Up"]` elements whose `data-active` is not exactly `"true"`.
+- Skips all automatic upvotes while any `[data-vote][title="Vote Down"]` button has `data-active="true"`, respecting your downvote. Resumes normal checks when the downvote is cleared.
 - Watches relevant DOM mutations and retries at the configured interval. DOM changes cannot bypass the check delay; clicks also have a per-element cooldown of the same duration.
 - Disconnects the observer and cancels timers while disabled.
 - Uses `storage` to save the toggle and exact-site host access to recognize rvrb tabs. An event-driven background service worker updates toolbar icons; it never scans page contents. No broad `tabs` permission, analytics, or external requests.

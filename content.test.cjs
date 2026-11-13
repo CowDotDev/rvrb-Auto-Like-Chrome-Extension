@@ -18,6 +18,10 @@ async function setup({ hostname = "app.rvrb.one", enabled = false, delaySeconds 
     location: { hostname },
     document: {
       documentElement: {},
+      querySelector: (selector) => {
+        assert.equal(selector, '[data-vote][title="Vote Down"][data-active="true"]');
+        return elements.find((element) => element.title === "Vote Down" && element.active === "true") ?? null;
+      },
       querySelectorAll: (selector) => {
         assert.equal(selector, '[data-vote][title="Vote Up"]');
         return elements.filter((element) => element.title === "Vote Up");
@@ -148,6 +152,35 @@ test("manifest grants only storage and exact HTTPS host access", () => {
   const manifest = JSON.parse(readFileSync(`${__dirname}/manifest.json`, "utf8"));
   assert.deepEqual(manifest.permissions, ["storage"]);
   assert.deepEqual(manifest.content_scripts[0].matches, ["https://app.rvrb.one/*"]);
+});
+
+test("respects active downvotes and resumes after they are cleared", async () => {
+  const app = await setup({ enabled: true });
+  const up = app.add("false", "Vote Up");
+  const down = app.add("true", "Vote Down");
+  await app.initialize();
+  assert.equal(up.clicks, 0);
+  app.tick();
+  assert.equal(up.clicks, 0);
+  assert.equal(down.clicks, 0);
+  down.active = "false";
+  app.mutate();
+  app.tick();
+  assert.equal(up.clicks, 1);
+  down.active = "true";
+  app.tick();
+  assert.equal(up.clicks, 1);
+});
+
+test("rechecks downvote state before each automatic click", async () => {
+  const app = await setup({ enabled: true });
+  const first = app.add("false", "Vote Up");
+  const second = app.add("false", "Vote Up");
+  const down = app.add("false", "Vote Down");
+  first.click = () => { first.clicks++; down.active = "true"; };
+  await app.initialize();
+  assert.equal(first.clicks, 1);
+  assert.equal(second.clicks, 0);
 });
 
 test("defaults to 15 seconds and DOM mutations cannot bypass the delay", async () => {
