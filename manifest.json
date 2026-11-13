@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "rvrb Auto-Like Chrome Extension",
+  "version": "1.0.0",
+  "description": "Automatically keep voting active on app.rvrb.one when enabled.",
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "rvrb Auto-Like",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://app.rvrb.one/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
