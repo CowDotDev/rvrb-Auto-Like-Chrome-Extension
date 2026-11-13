@@ -5,7 +5,7 @@ const vm = require("node:vm");
 
 const source = readFileSync(`${__dirname}/content.js`, "utf8");
 
-async function setup({ hostname = "app.rvrb.one", enabled = false } = {}) {
+async function setup({ hostname = "app.rvrb.one", enabled = false, delaySeconds = 15 } = {}) {
   let now = 0;
   let listener;
   let resolveSettings;
@@ -54,8 +54,9 @@ async function setup({ hostname = "app.rvrb.one", enabled = false } = {}) {
       return element;
     },
     toggle(value) { listener({ enabled: { newValue: value } }, "local"); },
+    delay(value) { listener({ delaySeconds: { newValue: value } }, "local"); },
     mutate() { if (observing) mutation(); },
-    tick(ms = 1000) {
+    tick(ms = 15000) {
       now += ms;
       for (const [id, timer] of [...timers]) {
         if (!timers.has(id)) continue;
@@ -64,7 +65,7 @@ async function setup({ hostname = "app.rvrb.one", enabled = false } = {}) {
       }
     },
     async initialize() {
-      resolveSettings?.({ enabled });
+      resolveSettings?.({ enabled, delaySeconds });
       await Promise.resolve();
     },
   };
@@ -147,4 +148,33 @@ test("manifest grants only storage and exact HTTPS host access", () => {
   const manifest = JSON.parse(readFileSync(`${__dirname}/manifest.json`, "utf8"));
   assert.deepEqual(manifest.permissions, ["storage"]);
   assert.deepEqual(manifest.content_scripts[0].matches, ["https://app.rvrb.one/*"]);
+});
+
+test("defaults to 15 seconds and DOM mutations cannot bypass the delay", async () => {
+  const app = await setup({ enabled: true });
+  const vote = app.add("false");
+  await app.initialize();
+  app.mutate();
+  app.tick(14999);
+  assert.equal(vote.clicks, 1);
+  app.tick(1);
+  assert.equal(vote.clicks, 2);
+});
+
+test("custom delays apply live and invalid values fall back to 15 seconds", async () => {
+  const app = await setup({ enabled: true, delaySeconds: 5 });
+  const vote = app.add("false");
+  await app.initialize();
+  app.tick(4999);
+  assert.equal(vote.clicks, 1);
+  app.tick(1);
+  assert.equal(vote.clicks, 2);
+  app.delay(2);
+  app.tick(2000);
+  assert.equal(vote.clicks, 3);
+  app.delay(0);
+  app.tick(14999);
+  assert.equal(vote.clicks, 3);
+  app.tick(1);
+  assert.equal(vote.clicks, 4);
 });

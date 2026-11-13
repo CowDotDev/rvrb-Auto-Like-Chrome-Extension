@@ -4,15 +4,30 @@
   // Defense in depth: never monitor another hostname, even if matches change.
   if (location.hostname !== "app.rvrb.one") return;
 
-  const retryDelay = 1000;
+  let retryDelay = 15000;
+  let lastScan = -Infinity;
   const lastClick = new WeakMap();
   let enabled = false;
   let interval;
   let scheduled;
-  let settingsRevision = 0;
+  let enabledChanged = false;
+  let delayChanged = false;
+
+  function setDelay(value) {
+    retryDelay = Number.isInteger(value) && value >= 1 && value <= 3600
+      ? value * 1000 : 15000;
+    if (enabled) {
+      clearInterval(interval);
+      clearTimeout(scheduled);
+      scheduled = undefined;
+      interval = setInterval(scan, retryDelay);
+    }
+  }
 
   function scan() {
     if (!enabled) return;
+    if (Date.now() - lastScan < retryDelay) return;
+    lastScan = Date.now();
     for (const element of document.querySelectorAll('[data-vote][title="Vote Up"]')) {
       if (!enabled) break;
       if (element.getAttribute("data-active") === "true") continue;
@@ -36,6 +51,7 @@
     if (enabled === value) return;
     enabled = value;
     if (enabled) {
+      lastScan = -Infinity;
       observer.observe(document.documentElement, {
         subtree: true,
         childList: true,
@@ -54,14 +70,20 @@
   }
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local" || !changes.enabled) return;
-    settingsRevision++;
-    setEnabled(changes.enabled.newValue === true);
+    if (area !== "local") return;
+    if (changes.delaySeconds) {
+      delayChanged = true;
+      setDelay(changes.delaySeconds.newValue);
+    }
+    if (changes.enabled) {
+      enabledChanged = true;
+      setEnabled(changes.enabled.newValue === true);
+    }
   });
 
-  const initialRevision = settingsRevision;
-  chrome.storage.local.get({ enabled: false }).then((settings) => {
+  chrome.storage.local.get({ enabled: false, delaySeconds: 15 }).then((settings) => {
     // A live toggle must take priority over an older initial storage read.
-    if (settingsRevision === initialRevision) setEnabled(settings.enabled === true);
+    if (!delayChanged) setDelay(settings.delaySeconds);
+    if (!enabledChanged) setEnabled(settings.enabled === true);
   }).catch(console.error);
 })();

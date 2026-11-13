@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "rvrb Auto-Like Chrome Extension",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Automatically keep voting active on app.rvrb.one when enabled.",
   "permissions": ["storage"],
   "host_permissions": ["https://app.rvrb.one/*"],

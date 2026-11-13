@@ -18,6 +18,9 @@
   <body>
     <h1>rvrb Auto-Like</h1>
     <label><input id="enabled" type="checkbox" disabled> Enable automatic voting</label>
+    <p><label for="delay">Check delay (seconds)</label></p>
+    <input id="delay" type="number" min="1" max="3600" step="1" value="15" disabled aria-describedby="delay-help">
+    <p id="delay-help">1–3600 seconds. First check is immediate.</p>
     <p>Only runs on <strong>app.rvrb.one</strong>.</p>
     <p id="status" role="status">Loading setting…</p>
   </body>
