@@ -12,13 +12,15 @@ A small Manifest V3 extension that keeps `[data-vote]` elements active on **http
 
 The setting persists across browser restarts and applies to all matching tabs. Turn it off in the popup to stop immediately.
 
+The toolbar icon is **grey** on other sites, **red** on app.rvrb.one with automatic voting off, and **green** on app.rvrb.one with automatic voting on. Pin the extension to keep the indicator visible.
+
 ## Behavior and permissions
 
 - Only injects into `https://app.rvrb.one/*`, not subdomains or other hosts.
 - Clicks every `[data-vote]` element whose `data-active` is not exactly `"true"`.
 - Watches relevant DOM mutations and retries at one-second intervals, with a per-element one-second click cooldown.
 - Disconnects the observer and cancels timers while disabled.
-- Uses only the `storage` permission to save the toggle. No analytics, external requests, or background service worker.
+- Uses `storage` to save the toggle and exact-site host access to recognize rvrb tabs. An event-driven background service worker updates toolbar icons; it never scans page contents. No broad `tabs` permission, analytics, or external requests.
 - Uses DOM `.click()`; sites that require trusted physical input may reject it. Shadow DOM and embedded frames are not scanned.
 
 ## Test
